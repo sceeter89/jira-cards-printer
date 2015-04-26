@@ -30,26 +30,33 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.fields.CustomField;
 
+import com.atlassian.templaterenderer.TemplateRenderer;
+
 public class CardsPrinterServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(CardsPrinterServlet.class);
     private final JiraAuthenticationContext jiraAuthenticationContext;
     private final SearchService searchService;
     private final CustomField storyPointsField;
+    private final TemplateRenderer templateRenderer;
     
     public CardsPrinterServlet(
 	JiraAuthenticationContext jiraAuthenticationContext,
 	SearchService searchService,
-	CustomFieldManager customFieldManager) {
+	CustomFieldManager customFieldManager,
+	TemplateRenderer templateRenderer) {
 	
 	this.jiraAuthenticationContext = jiraAuthenticationContext;
 	this.searchService = searchService;
 	this.storyPointsField = customFieldManager.getCustomFieldObjectByName("Story Points");
+	this.templaterenderer = templateRenderer;
     }
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
 	String jqlQuery = req.getParameter("jqlQuery");
+	String baseUrl = ComponentAccessor.getApplicationProperties().getString("jira.baseurl");
+	String jqlQueryUrl = resp.encodeURL(jqlQuery);
 	StringBuilder responseBuilder = new StringBuilder();
 	resp.setContentType("text/html");
 	
@@ -111,9 +118,9 @@ public class CardsPrinterServlet extends HttpServlet {
 		    responseBuilder.append("</table>")
 			.append("<br />")
 			.append("<a href=\"")
-			.append(ComponentAccessor.getApplicationProperties().getString("jira.baseurl"))
+			.append()
 			.append("/plugins/servlet/ganymede/cardsprintpreview?jqlQuery=")
-			.append(resp.encodeURL(jqlQuery))
+			.append()
 			.append("\">Print</a>");
 		}
 		catch(SearchException e) {

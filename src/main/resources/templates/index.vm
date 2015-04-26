@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <meta name="decorator" content="atl.general">
+    <title>Print cards for your scrum/kanban board</title>
+  </head>
+  <body>
+    #if( $errorMessage )
+      <div>
+	$errorMessage
+      </div>
+    #end
+    <form method="GET">
+      <label>JQL: <input type="text" name="jqlQuery" id="jqlQuery" /></label>
+    </form>
+    <br />
+    #if( $issues )
+      <table>
+	<tr>
+	  <td>Key</td>
+	  <td>Summary</td>
+	  <td>Story Points</td>
+	  <td>Subtasks</td>
+	</tr>
+	#foreach( $issue in $issues )
+	<tr>
+	  <td>$issue.key</td>
+	  <td>$issue.summary</td>
+	  <td>$issue.storyPoints</td>
+	  <td>$issue.subtasks</td>
+	</tr>
+	#end
+      </table>
+      
+      <a href="$baseurl/plugins/servlet/ganymede/cardsprintpreview?jqlQuery=$jqlQuery">Print</a>
+    #end
+  </body>
+</html>
