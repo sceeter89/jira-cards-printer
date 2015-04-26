@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+  <plugin-info>
+    <description>${project.description}</description>
+    <version>${project.version}</version>
+    <vendor name="${project.organization.name}" url="${project.organization.url}"/>
+    <param name="plugin-icon">images/pluginIcon.png</param>
+    <param name="plugin-logo">images/pluginLogo.png</param>
+  </plugin-info>
+  <!-- add our i18n resource -->
+  <resource type="i18n" name="i18n" location="cardsPrinter"/>
+  <!-- add our web resources -->
+  <web-resource key="cardsPrinter-resources" name="cardsPrinter Web Resources">
+    <dependency>com.atlassian.auiplugin:ajs</dependency>
+    <resource type="download" name="cardsPrinter.css" location="/css/cardsPrinter.css"/>
+    <resource type="download" name="cardsPrinter.js" location="/js/cardsPrinter.js"/>
+    <resource type="download" name="images/" location="/images"/>
+    <context>cardsPrinter</context>
+  </web-resource>
+  <!-- publish our component -->
+  <component key="myPluginComponent" class="eu.ganymede.jira.cardsPrinter.MyPluginComponentImpl" public="true">
+    <interface>eu.ganymede.jira.cardsPrinter.MyPluginComponent</interface>
+  </component>
+  <!-- import from the product container -->
+  <component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties"/>
+  <servlet name="Cards Printer Servlet" i18n-name-key="cards-printer-servlet.name" key="cards-printer-servlet" class="eu.ganymede.jira.cardsPrinter.servlet.CardsPrinterServlet">
+    <description key="cards-printer-servlet.description">The Cards Printer Servlet Plugin</description>
+    <url-pattern>/ganymede/cardsprinter</url-pattern>
+  </servlet>
+  <servlet name="Cards Print Preview Servlet" i18n-name-key="cards-print-preview-servlet.name" key="cards-print-preview-servlet" class="eu.ganymede.jira.cardsPrinter.servlet.CardsPrintPreviewServlet">
+    <description key="cards-print-preview-servlet.description">The Cards Print Preview Servlet Plugin</description>
+    <url-pattern>/ganymede/cardsprintpreview</url-pattern>
+  </servlet>
+</atlassian-plugin>
