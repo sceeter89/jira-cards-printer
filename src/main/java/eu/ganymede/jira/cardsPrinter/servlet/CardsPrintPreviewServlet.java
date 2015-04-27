@@ -28,6 +28,10 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.fields.CustomField;
 
+import javax.servlet.ServletOutputStream;
+import java.io.ByteArrayOutputStream;
+import eu.ganymede.jira.cardsPrinter.CardInformation;
+
 public class CardsPrintPreviewServlet extends HttpServlet{
     private static final Logger log = LoggerFactory.getLogger(CardsPrintPreviewServlet.class);
     private final JiraAuthenticationContext jiraAuthenticationContext;
@@ -49,77 +53,59 @@ public class CardsPrintPreviewServlet extends HttpServlet{
     {
 	String jqlQuery = req.getParameter("jqlQuery");
 	StringBuilder responseBuilder = new StringBuilder();
-	resp.setContentType("text/html");
+	        	
+	SearchResults result = null;
+	try {
+	    result = this.searchService.search(user, parseResult.getQuery(), PagerFilter.getUnlimitedFilter());
 	
-	responseBuilder.append("<html>")
-	    .append("<head>")
-	    .append("<title>Print CardsPrintPreviewServlet</title>")
-	    .append("<style>")
-	    .append("table.card")
-	    .append("</style>")
-	    .append("</head>")
-	    .append("<body>");
-	        
-        if (jqlQuery != null) {
-	    ApplicationUser applicationUser = this.jiraAuthenticationContext.getUser();
-	    User user = ApplicationUsers.toDirectoryUser(applicationUser);
+	    List<Issue> issues = result.getIssues();
+	    List<CardInformation> issueCards = new ArrayList<CardInformation>();
 	    
-	    SearchService.ParseResult parseResult = this.searchService.parseQuery(user, jqlQuery);
+	    for(Issue issue: issues) {
+		String key = issue.getKey();
+		String summary = issue.getSummary();
+		int subtasks = issue.getSubTaskObjects().size();
+		int storyPoints = this.storyPointsField != null && this.storyPointsField.getValue(issue) != null ?
+				    Math.round((Float)this.storyPointsField.getValue(issue))
+				    : -1;
+		
+		issueCards.add(new CardInformation(key,
+		    summary,
+		    storyPoints,
+		    subtasks));
+	    }
 	    
-	    Map<String, Object> context = new HashMap<String, Object>();
-	    if (false == parseResult.isValid()) {
-		responseBuilder.append("Invalid JQL query:<br/><ul><li>Errors:<ul>");
-		for(String error: parseResult.getErrors().getErrorMessages()) {
-		    responseBuilder.append("<li>").append(error).append("</li>");		
-		}
-		
-		responseBuilder.append("</ul></li><li>Warnings:<ul>");
-		for(String warning: parseResult.getErrors().getWarningMessages()) {
-		    responseBuilder.append("<li>").append(warning).append("</li>");		
-		}
-		
-		responseBuilder.append("</ul></li></ul>");
-	    }
-	    else {
-		
-		SearchResults result = null;
-		try {
-		    result = this.searchService.search(user, parseResult.getQuery(), PagerFilter.getUnlimitedFilter());
-		
-		    List<Issue> issues = result.getIssues();
-		    responseBuilder.append("<div>");
-		    for(Issue issue: issues) {
-			String key = issue.getKey();
-			String summary = issue.getSummary();
-			int subtasks = issue.getSubTaskObjects().size();
-			int storyPoints = this.storyPointsField != null && this.storyPointsField.getValue(issue) != null ?
-					    Math.round((Float)this.storyPointsField.getValue(issue))
-					    : -1;
-			
-			responseBuilder.append("<div>")
-			    .append("<table class=\"card\">")
-			    .append("<tr><td>").append(key).append("</td></tr>")
-			    .append("<tr><td>").append(summary).append("</td></tr>")
-			    .append("<tr><td>").append(storyPoints).append("</td></tr>")
-			    .append("<tr><td>").append(subtasks).append("</td></tr>")
-			    .append("</table>")
-			    .append("</div>");
-		    }
-		    responseBuilder.append("</div>");
-		}
-		catch(SearchException e) {
-		    responseBuilder.append("Searching for issues was insterrupted by error:")
-			.append("</br>")
-			.append(e.getMessage())
-			.append("</br>")
-			.append(e.getStackTrace());
-		}
-	    }
-        }
-        
-	responseBuilder.append("</body>");
-	responseBuilder.append("</html>");
-        resp.getWriter().write(responseBuilder.toString());
-        return;
+	    resp.setContentType("application/pdf");
+	    resp.setHeader("Content-disposition",
+		    "inline; filename=AgileCards.pdf" );
+	    
+	    ByteArrayOutputStream outputPdfBytes = generatePdfCardsPreview(issueCards);	
+	    resp.setContentLength(outputPdfBytes.size());
+	    ServletOutputStream sos;
+	    sos = resp.getOutputStream();
+	    baos.writeTo(sos);
+	    sos.flush();
+	    return
+	}
+	catch(SearchException e) {
+	    responseBuilder.append("Searching for issues was insterrupted by error:")
+		.append("</br>")
+		.append(e.getMessage())
+		.append("</br>")
+		.append(e.getStackTrace());
+	}
+	    
+        if (responseBuilder.length() > 0)
+	    context.put("errorMessage", responseBuilder.toString());
+	
+	resp.setContentType("text/html");
+        templateRenderer.render("templates/index.vm", context, resp.getWriter());
+    }
+    
+    private ByteArrayOutputStream generatePdfCardsPreview(List<CardInformation> cards) {
+	//Document doc = new Document();
+	ByteArrayOutputStream baosPDF = new ByteArrayOutputStream();
+	PdfWriter docWriter = null;
+	docWriter = PdfWriter.getInstance(doc, baosPDF);
     }
 }
