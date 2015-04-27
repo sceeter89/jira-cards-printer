@@ -18,10 +18,7 @@
     <resource type="download" name="images/" location="/images"/>
     <context>cardsPrinter</context>
   </web-resource>
-  <!-- publish our component -->
-  <component key="myPluginComponent" class="eu.ganymede.jira.cardsPrinter.MyPluginComponentImpl" public="true">
-    <interface>eu.ganymede.jira.cardsPrinter.MyPluginComponent</interface>
-  </component>
+  
   <!-- import from the product container -->
   <component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties"/>
   <servlet name="Cards Printer Servlet" i18n-name-key="cards-printer-servlet.name" key="cards-printer-servlet" class="eu.ganymede.jira.cardsPrinter.servlet.CardsPrinterServlet">
@@ -32,4 +29,5 @@
     <description key="cards-print-preview-servlet.description">The Cards Print Preview Servlet Plugin</description>
     <url-pattern>/ganymede/cardsprintpreview</url-pattern>
   </servlet>
+  <component-import key="templateRenderer" interface="com.atlassian.templaterenderer.TemplateRenderer" filter=""/>
 </atlassian-plugin>

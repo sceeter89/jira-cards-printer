@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.ArrayList;
 
 import com.atlassian.jira.config.properties.ApplicationProperties;
 import com.atlassian.jira.security.JiraAuthenticationContext;
@@ -32,6 +33,8 @@ import com.atlassian.jira.issue.fields.CustomField;
 
 import com.atlassian.templaterenderer.TemplateRenderer;
 
+import eu.ganymede.jira.cardsPrinter.CardInformation;
+
 public class CardsPrinterServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(CardsPrinterServlet.class);
     private final JiraAuthenticationContext jiraAuthenticationContext;
@@ -48,7 +51,7 @@ public class CardsPrinterServlet extends HttpServlet {
 	this.jiraAuthenticationContext = jiraAuthenticationContext;
 	this.searchService = searchService;
 	this.storyPointsField = customFieldManager.getCustomFieldObjectByName("Story Points");
-	this.templaterenderer = templateRenderer;
+	this.templateRenderer = templateRenderer;
     }
     
     @Override
@@ -57,19 +60,13 @@ public class CardsPrinterServlet extends HttpServlet {
 	String jqlQuery = req.getParameter("jqlQuery");
 	String baseUrl = ComponentAccessor.getApplicationProperties().getString("jira.baseurl");
 	String jqlQueryUrl = resp.encodeURL(jqlQuery);
+	
+	Map<String, Object> context = new HashMap<String, Object>();
+	context.put("jqlQuery", jqlQueryUrl);
+	context.put("baseUrl", baseUrl);
+	
 	StringBuilder responseBuilder = new StringBuilder();
 	resp.setContentType("text/html");
-	
-	responseBuilder.append("<html>")
-	    .append("<head>")
-	    .append("<meta name=\"decorator\" content=\"atl.general\">")
-	    .append("<title>Print cards for your scrum/kanban board</title>")
-	    .append("</head>")
-	    .append("<body>");
-	
-	responseBuilder.append("<form method=\"GET\">")
-	    .append("<label>JQL: <input type=\"text\" name=\"jqlQuery\" id=\"jqlQuery\" /></label>")
-	    .append("</form>");
         
         if (jqlQuery != null) {
 	    ApplicationUser applicationUser = this.jiraAuthenticationContext.getUser();
@@ -77,7 +74,6 @@ public class CardsPrinterServlet extends HttpServlet {
 	    
 	    SearchService.ParseResult parseResult = this.searchService.parseQuery(user, jqlQuery);
 	    
-	    Map<String, Object> context = new HashMap<String, Object>();
 	    if (false == parseResult.isValid())
 	    {
 		responseBuilder.append("Invalid JQL query:<br/><ul><li>Errors:<ul>");
@@ -91,6 +87,8 @@ public class CardsPrinterServlet extends HttpServlet {
 		}
 		
 		responseBuilder.append("</ul></li></ul>");
+		
+		
 	    }
 	    else {
 		
@@ -99,7 +97,8 @@ public class CardsPrinterServlet extends HttpServlet {
 		    result = this.searchService.search(user, parseResult.getQuery(), PagerFilter.getUnlimitedFilter());
 		
 		    List<Issue> issues = result.getIssues();
-		    responseBuilder.append("<table>");
+		    List<CardInformation> issueCards = new ArrayList<CardInformation>();
+		    
 		    for(Issue issue: issues) {
 			String key = issue.getKey();
 			String summary = issue.getSummary();
@@ -108,20 +107,12 @@ public class CardsPrinterServlet extends HttpServlet {
 					    Math.round((Float)this.storyPointsField.getValue(issue))
 					    : -1;
 			
-			responseBuilder.append("<tr>")
-			    .append("<td>").append(key).append("</td>")
-			    .append("<td>").append(summary).append("</td>")
-			    .append("<td>").append(storyPoints).append("</td>")
-			    .append("<td>").append(subtasks).append("</td>")
-			    .append("</tr>");
+			issueCards.add(new CardInformation(key,
+			    summary,
+			    storyPoints,
+			    subtasks));
 		    }
-		    responseBuilder.append("</table>")
-			.append("<br />")
-			.append("<a href=\"")
-			.append()
-			.append("/plugins/servlet/ganymede/cardsprintpreview?jqlQuery=")
-			.append()
-			.append("\">Print</a>");
+		    context.put("issues", issueCards);
 		}
 		catch(SearchException e) {
 		    responseBuilder.append("Searching for issues was insterrupted by error:")
@@ -133,10 +124,9 @@ public class CardsPrinterServlet extends HttpServlet {
 	    }
         }
         
-	responseBuilder.append("</body>");
-	responseBuilder.append("</html>");
-        resp.getWriter().write(responseBuilder.toString());
-        return;
+        if (responseBuilder.length() > 0)
+	    context.put("errorMessage", responseBuilder.toString());
+        
+        templateRenderer.render("templates/index.vm", context, resp.getWriter());
     }
-
 }
