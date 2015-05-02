@@ -216,6 +216,11 @@ public class CardsPrintPreviewServlet extends HttpServlet{
 	contentStream.endText();
     }
     
+    private void drawStringWithWordWrap(float left, float top, float fontSize, String text, PDPageContentStream contentStream, float maxWidth) throws IOException {
+	StringBuilder currentLine = new StringBuilder();
+	
+    }
+    
     private void drawHorizontalLine(float left, float top, float width, PDPageContentStream contentStream) throws IOException {
 	contentStream.drawLine(left, top + cmToUnit(0.5f), left + cardWidth, top + cmToUnit(0.5f));
     }
