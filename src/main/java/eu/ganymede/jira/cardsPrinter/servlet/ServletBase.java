@@ -118,7 +118,6 @@ public abstract class ServletBase extends HttpServlet{
 	}
     }
     
-    	
     private void redirectToLogin(HttpServletRequest request, HttpServletResponse response) throws IOException
     {
 	response.sendRedirect(loginUriProvider.getLoginUri(getUri(request)).toASCIIString());
