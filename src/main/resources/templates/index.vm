@@ -4,9 +4,9 @@
     <title>Print cards for your scrum/kanban board</title>
   </head>
   <body>
-    #if( $errorMessage )
+    #if( $errorMessageHtml )
       <div>
-	$errorMessage
+	$errorMessageHtml
       </div>
     #end
     <div style="width: 100%; text-align: center;">
@@ -34,7 +34,7 @@
 	    #end
 	  <tr>
 	    <td colspan="4">
-	      <a href="$baseurl/plugins/servlet/ganymede/cardsprintpreview?jqlQuery=$jqlQuery">Print</a>
+	      <a href="$baseUrl/plugins/servlet/ganymede/cardsprintpreview?jqlQuery=$jqlQuery">Print</a>
 	    </td>
 	  </tr>	
 	#else

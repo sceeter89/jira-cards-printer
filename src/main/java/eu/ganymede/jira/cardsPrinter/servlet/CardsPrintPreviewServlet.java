@@ -8,30 +8,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import com.atlassian.crowd.embedded.api.User;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
-import com.atlassian.templaterenderer.TemplateRenderer;
-
-import com.atlassian.jira.security.JiraAuthenticationContext;
-import com.atlassian.jira.user.ApplicationUser;
-import com.atlassian.jira.user.ApplicationUsers;
-import com.atlassian.crowd.embedded.api.User;
-import com.atlassian.sal.api.auth.LoginUriProvider;
-import com.atlassian.sal.api.user.UserManager;
-
-import com.atlassian.jira.bc.issue.search.SearchService;
-import com.atlassian.jira.bc.issue.search.SearchService.ParseResult;
 import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchResults;
 import com.atlassian.jira.web.bean.PagerFilter;
-import com.atlassian.query.Query;
 import com.atlassian.jira.issue.Issue;
-import com.atlassian.jira.issue.CustomFieldManager;
-import com.atlassian.jira.issue.fields.CustomField;
 
 import javax.servlet.ServletOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -45,13 +32,6 @@ import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.exceptions.COSVisitorException;
 
 public class CardsPrintPreviewServlet extends ServletBase {
-    private static final Logger log = LoggerFactory.getLogger(CardsPrintPreviewServlet.class);
-    private final JiraAuthenticationContext jiraAuthenticationContext;
-    private final SearchService searchService;
-    private final CustomField storyPointsField;
-    private final TemplateRenderer templateRenderer;
-    private final UserManager userManager;
-    private final LoginUriProvider loginUriProvider;
     
     private final PDFont font = PDType1Font.HELVETICA;
     private final float cardWidth = cmToUnit(6.5f);
@@ -59,102 +39,48 @@ public class CardsPrintPreviewServlet extends ServletBase {
     private final int cardsInRow = 3;
     private final int cardsInColumn = 6;
     
-    public CardsPrintPreviewServlet(
-	JiraAuthenticationContext jiraAuthenticationContext,
-	SearchService searchService,
-	CustomFieldManager customFieldManager,
-	TemplateRenderer templateRenderer,
-	UserManager userManager,
-	LoginUriProvider loginUriProvider) {
-	super(userManager, loginUriProvider);
-	
-	this.jiraAuthenticationContext = jiraAuthenticationContext;
-	this.searchService = searchService;
-	this.storyPointsField = customFieldManager.getCustomFieldObjectByName("Story Points");
-	this.templateRenderer = templateRenderer;
-	this.userManager = userManager;
-	this.loginUriProvider = loginUriProvider;
-    }
-    
     @Override
-    protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
+    protected void processRequest(HttpServletRequest req, HttpServletResponse resp, User user) throws IOException, SearchException
     {
-	String jqlQuery = req.getParameter("jqlQuery");
 	StringBuilder responseBuilder = new StringBuilder();
 	Map<String, Object> context = new HashMap<String, Object>();     
         
-        if (jqlQuery != null) {
-	    ApplicationUser applicationUser = this.jiraAuthenticationContext.getUser();
-	    User user = ApplicationUsers.toDirectoryUser(applicationUser);
+        if (parsedQuery != null) {
+	    SearchResults result = this.searchService.search(user, parsedQuery, PagerFilter.getUnlimitedFilter());
+	
+	    List<Issue> issues = result.getIssues();
+	    List<CardInformation> issueCards = new ArrayList<CardInformation>();
 	    
-	    SearchService.ParseResult parseResult = this.searchService.parseQuery(user, jqlQuery);
+	    for(Issue issue: issues) {
+		String key = issue.getKey();
+		String summary = issue.getSummary();
+		int subtasks = issue.getSubTaskObjects().size();
+		int storyPoints = this.storyPointsField != null && this.storyPointsField.getValue(issue) != null ?
+				    Math.round((Float)this.storyPointsField.getValue(issue))
+				    : -1;
+		
+		issueCards.add(new CardInformation(key,
+		    summary,
+		    storyPoints,
+		    subtasks));
+	    }
+	    resp.setContentType("application/pdf");
+	    resp.setHeader("Content-disposition",
+		    "inline; filename=AgileCards.pdf" );
+	    try {
+		ByteArrayOutputStream outputPdfBytes = generatePdfCardsPreview(issueCards);	
+		resp.setContentLength(outputPdfBytes.size());
+		ServletOutputStream sos;
+		sos = resp.getOutputStream();
+		outputPdfBytes.writeTo(sos);
+		sos.flush();
+		return;
+	    }
+	    catch(COSVisitorException e) {
+		return;
+	    }
 	    
-	    if (false == parseResult.isValid())
-	    {
-		responseBuilder.append("Invalid JQL query:<br/><ul><li>Errors:<ul>");
-		for(String error: parseResult.getErrors().getErrorMessages()) {
-		    responseBuilder.append("<li>").append(error).append("</li>");		
-		}
-		
-		responseBuilder.append("</ul></li><li>Warnings:<ul>");
-		for(String warning: parseResult.getErrors().getWarningMessages()) {
-		    responseBuilder.append("<li>").append(warning).append("</li>");		
-		}
-		
-		responseBuilder.append("</ul></li></ul>");
-		
-		
-	    }
-	    else {
-		
-		SearchResults result = null;
-		try {
-		    result = this.searchService.search(user, parseResult.getQuery(), PagerFilter.getUnlimitedFilter());
-		
-		    List<Issue> issues = result.getIssues();
-		    List<CardInformation> issueCards = new ArrayList<CardInformation>();
-		    
-		    for(Issue issue: issues) {
-			String key = issue.getKey();
-			String summary = issue.getSummary();
-			int subtasks = issue.getSubTaskObjects().size();
-			int storyPoints = this.storyPointsField != null && this.storyPointsField.getValue(issue) != null ?
-					    Math.round((Float)this.storyPointsField.getValue(issue))
-					    : -1;
-			
-			issueCards.add(new CardInformation(key,
-			    summary,
-			    storyPoints,
-			    subtasks));
-		    }
-		    resp.setContentType("application/pdf");
-		    resp.setHeader("Content-disposition",
-			    "inline; filename=AgileCards.pdf" );
-		    try {
-			ByteArrayOutputStream outputPdfBytes = generatePdfCardsPreview(issueCards);	
-			resp.setContentLength(outputPdfBytes.size());
-			ServletOutputStream sos;
-			sos = resp.getOutputStream();
-			outputPdfBytes.writeTo(sos);
-			sos.flush();
-			return;
-		    }
-		    catch(COSVisitorException e) {
-			return;
-		    }
-		}
-		catch(SearchException e) {
-		    responseBuilder.append("Searching for issues was insterrupted by error:")
-			.append("</br>")
-			.append(e.getMessage())
-			.append("</br>")
-			.append(e.getStackTrace());
-		}
-	    }
         }
-        
-        if (responseBuilder.length() > 0)
-	    context.put("errorMessage", responseBuilder.toString());
         
         templateRenderer.render("templates/index.vm", context, resp.getWriter());
         
