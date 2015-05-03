@@ -40,6 +40,8 @@ public abstract class ServletBase extends HttpServlet{
     protected String jqlQueryUrl;
     protected Query parsedQuery;
     Map<String, Object> context = new HashMap<String, Object>();
+    ApplicationUser applicationUser;
+    User user;
     
     public void setUserManager (UserManager userManager) { this.userManager = userManager; }
     public void setLoginUriProvider (LoginUriProvider loginUriProvider) { this.loginUriProvider = loginUriProvider; }
@@ -66,8 +68,8 @@ public abstract class ServletBase extends HttpServlet{
 		
 	baseUrl = ComponentAccessor.getApplicationProperties().getString("jira.baseurl");
 	
-	ApplicationUser applicationUser = this.jiraAuthenticationContext.getUser();
-	User user = ApplicationUsers.toDirectoryUser(applicationUser);
+	applicationUser = this.jiraAuthenticationContext.getUser();
+	user = ApplicationUsers.toDirectoryUser(applicationUser);
 	
 	if (jqlQuery != null) {
 	    ParseResult parseResult = this.searchService.parseQuery(user, jqlQuery);
@@ -97,9 +99,10 @@ public abstract class ServletBase extends HttpServlet{
 	}
 	context.put("jqlQuery", jqlQuery);
 	context.put("jqlQueryUrl", jqlQueryUrl);
+	context.put("baseUrl", baseUrl);
 	
 	try {
-	    processRequest(request, response, user);
+	    processRequest(request, response);
 	}
 	catch(Exception e) {
 	    StringBuilder responseBuilder = new StringBuilder();
@@ -132,6 +135,6 @@ public abstract class ServletBase extends HttpServlet{
 	return URI.create(builder.toString());
     } 
     
-    protected abstract void processRequest(HttpServletRequest request, HttpServletResponse response, User user) throws IOException, SearchException;
+    protected abstract void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException, SearchException;
     
 }

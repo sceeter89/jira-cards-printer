@@ -25,12 +25,8 @@ import eu.ganymede.jira.cardsPrinter.CardInformation;
 public class CardsPrinterServlet extends ServletBase {
     
     @Override
-    protected void processRequest(HttpServletRequest req, HttpServletResponse resp, User user) throws IOException, SearchException
-    {	
-	Map<String, Object> context = new HashMap<String, Object>();
-	context.put("jqlQuery", jqlQueryUrl);
-	context.put("baseUrl", baseUrl);
-	
+    protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException, SearchException
+    {		
 	StringBuilder responseBuilder = new StringBuilder();
 	resp.setContentType("text/html");
         
