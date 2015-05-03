@@ -20,6 +20,8 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.ApplicationUsers;
 import com.atlassian.crowd.embedded.api.User;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.sal.api.auth.LoginUriProvider;
+import com.atlassian.sal.api.user.UserManager;
 
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.bc.issue.search.SearchService.ParseResult;
@@ -35,7 +37,7 @@ import com.atlassian.templaterenderer.TemplateRenderer;
 
 import eu.ganymede.jira.cardsPrinter.CardInformation;
 
-public class CardsPrinterServlet extends HttpServlet {
+public class CardsPrinterServlet extends ServletBase {
     private static final Logger log = LoggerFactory.getLogger(CardsPrinterServlet.class);
     private final JiraAuthenticationContext jiraAuthenticationContext;
     private final SearchService searchService;
@@ -46,7 +48,10 @@ public class CardsPrinterServlet extends HttpServlet {
 	JiraAuthenticationContext jiraAuthenticationContext,
 	SearchService searchService,
 	CustomFieldManager customFieldManager,
-	TemplateRenderer templateRenderer) {
+	TemplateRenderer templateRenderer,
+	UserManager userManager,
+	LoginUriProvider loginUriProvider) {
+	super(userManager, loginUriProvider);
 	
 	this.jiraAuthenticationContext = jiraAuthenticationContext;
 	this.searchService = searchService;
@@ -55,7 +60,7 @@ public class CardsPrinterServlet extends HttpServlet {
     }
     
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
+    protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
 	String jqlQuery = req.getParameter("jqlQuery");
 	String baseUrl = ComponentAccessor.getApplicationProperties().getString("jira.baseurl");

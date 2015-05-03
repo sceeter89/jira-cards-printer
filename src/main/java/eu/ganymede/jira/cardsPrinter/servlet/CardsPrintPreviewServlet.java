@@ -20,6 +20,8 @@ import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.ApplicationUsers;
 import com.atlassian.crowd.embedded.api.User;
+import com.atlassian.sal.api.auth.LoginUriProvider;
+import com.atlassian.sal.api.user.UserManager;
 
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.bc.issue.search.SearchService.ParseResult;
@@ -42,12 +44,14 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.exceptions.COSVisitorException;
 
-public class CardsPrintPreviewServlet extends HttpServlet{
+public class CardsPrintPreviewServlet extends ServletBase {
     private static final Logger log = LoggerFactory.getLogger(CardsPrintPreviewServlet.class);
     private final JiraAuthenticationContext jiraAuthenticationContext;
     private final SearchService searchService;
     private final CustomField storyPointsField;
     private final TemplateRenderer templateRenderer;
+    private final UserManager userManager;
+    private final LoginUriProvider loginUriProvider;
     
     private final PDFont font = PDType1Font.HELVETICA;
     private final float cardWidth = cmToUnit(6.5f);
@@ -59,16 +63,21 @@ public class CardsPrintPreviewServlet extends HttpServlet{
 	JiraAuthenticationContext jiraAuthenticationContext,
 	SearchService searchService,
 	CustomFieldManager customFieldManager,
-	TemplateRenderer templateRenderer) {
+	TemplateRenderer templateRenderer,
+	UserManager userManager,
+	LoginUriProvider loginUriProvider) {
+	super(userManager, loginUriProvider);
 	
 	this.jiraAuthenticationContext = jiraAuthenticationContext;
 	this.searchService = searchService;
 	this.storyPointsField = customFieldManager.getCustomFieldObjectByName("Story Points");
 	this.templateRenderer = templateRenderer;
+	this.userManager = userManager;
+	this.loginUriProvider = loginUriProvider;
     }
     
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
+    protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
 	String jqlQuery = req.getParameter("jqlQuery");
 	StringBuilder responseBuilder = new StringBuilder();

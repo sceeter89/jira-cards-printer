@@ -30,4 +30,7 @@
     <url-pattern>/ganymede/cardsprintpreview</url-pattern>
   </servlet>
   <component-import key="templateRenderer" interface="com.atlassian.templaterenderer.TemplateRenderer" filter=""/>
+  <component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager" filter=""/>
+  <component-import key="loginUriProvider" interface="com.atlassian.sal.api.auth.LoginUriProvider" filter=""/>
+  <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory" filter=""/>
 </atlassian-plugin>
