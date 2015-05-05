@@ -78,7 +78,7 @@ public class PdfCardsPrinter {
 	//contentStream.setNonStrokingColor(0, 0, 255);
 	drawStringToLeft(left + cmToUnit(0.1f), top + cardHeight - cmToUnit(0.29f), 10, card.getKey(), contentStream);
 	drawStringToLeft(left + cmToUnit(3.0f), top + cardHeight - cmToUnit(0.5f), 6, "Subtasks: " + Integer.toString(card.getSubtasks()), contentStream);
-	drawStringToLeft(left + cmToUnit(0.1f), top + cardHeight - cmToUnit(1), 8, card.getSummary(), contentStream);
+	drawStringWithWordWrap(left + cmToUnit(0.1f), top + cardHeight - cmToUnit(1), 8, card.getSummary(), contentStream, cmToUnit(5.0f));
 	drawStringToLeft(left + cmToUnit(0.1f), top + cmToUnit(0.25f), 8, "Story points: " + Integer.toString(card.getStoryPoints()), contentStream);
     }
     
@@ -90,9 +90,30 @@ public class PdfCardsPrinter {
 	contentStream.endText();
     }
     
+    private float getTextWidth(String string, float fontSize) throws IOException {
+	return font.getStringWidth(string) / 1000 * fontSize;
+    }
+    
     private void drawStringWithWordWrap(float left, float top, float fontSize, String text, PDPageContentStream contentStream, float maxWidth) throws IOException {
+	float currentTop = top;
 	StringBuilder currentLine = new StringBuilder();
+	StringBuilder inputString = new StringBuilder(text);
 	
+	for (int i = 0; i < inputString.length(); i++) {
+	    char currentLetter = inputString.charAt(i);
+	    
+	    float currentWidth = getTextWidth(currentLine.toString() + currentLetter, fontSize);
+	    if (currentWidth >= maxWidth) {
+		drawStringToLeft(left, currentTop, fontSize, currentLine.toString(), contentStream);
+		currentTop -= fontSize + 1;
+		currentLine = new StringBuilder();
+	    }
+	    
+	    currentLine.append(currentLetter);
+	}
+	
+	if (currentLine.length() > 0)
+	    drawStringToLeft(left, currentTop, fontSize, currentLine.toString(), contentStream);
     }
     
     private void drawHorizontalLine(float left, float top, float width, PDPageContentStream contentStream) throws IOException {
