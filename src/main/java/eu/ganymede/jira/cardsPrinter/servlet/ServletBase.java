@@ -47,10 +47,12 @@ public abstract class ServletBase extends HttpServlet{
     public void setLoginUriProvider (LoginUriProvider loginUriProvider) { this.loginUriProvider = loginUriProvider; }
     public void setJiraAuthenticationContext (JiraAuthenticationContext jiraAuthenticationContext) { this.jiraAuthenticationContext = jiraAuthenticationContext; }
     public void setSearchService (SearchService searchService) { this.searchService = searchService; }
+    
     public void setCustomFieldManager (CustomFieldManager customFieldManager) { 
 	this.customFieldManager = customFieldManager; 
 	this.storyPointsField = customFieldManager.getCustomFieldObjectByName("Story Points");
     }
+    
     public void setTemplateRenderer (TemplateRenderer templateRenderer) { this.templateRenderer = templateRenderer; }
     
     @Override

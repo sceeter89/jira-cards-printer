@@ -104,7 +104,7 @@ public class PdfCardsPrinter {
 	    
 	    float currentWidth = getTextWidth(currentLine.toString() + currentLetter, fontSize);
 	    if (currentWidth >= maxWidth) {
-		drawStringToLeft(left, currentTop, fontSize, currentLine.toString(), contentStream);
+		drawStringToLeft(left, currentTop, fontSize, currentLine.toString() + "-", contentStream);
 		currentTop -= fontSize + 1;
 		currentLine = new StringBuilder();
 	    }
