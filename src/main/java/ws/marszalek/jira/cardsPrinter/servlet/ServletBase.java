@@ -145,14 +145,14 @@ public abstract class ServletBase extends HttpServlet{
 	return URI.create(builder.toString());
     }
     
-    private CardInformation issueToCardInfo(Issue issue)
+    protected CardInformation issueToCardInfo(Issue issue)
     {
 	String key = issue.getKey();
 	String summary = issue.getSummary();
 	int subtasks = issue.getSubTaskObjects().size();
-	int storyPoints = this.storyPointsField != null && this.storyPointsField.getValue(issue) != null ?
-			    Math.round((Float)this.storyPointsField.getValue(issue))
-			    : -1;
+	int storyPoints = (int)(this.storyPointsField != null && this.storyPointsField.getValue(issue) != null ?
+			    Math.round((Double)this.storyPointsField.getValue(issue))
+			    : -1);
 	
 	return new CardInformation(key,
 	    summary,
