@@ -1,4 +1,4 @@
-package eu.ganymede.jira.cardsPrinter.servlet;
+package ws.marszalek.jira.cardsPrinter.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+
 import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.ApplicationUsers;
@@ -17,7 +18,6 @@ import com.atlassian.crowd.embedded.api.User;
 import com.atlassian.sal.api.auth.LoginUriProvider;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.jira.bc.issue.search.SearchService.ParseResult;
-
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.issue.search.SearchException;
@@ -25,6 +25,9 @@ import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.templaterenderer.TemplateRenderer;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.query.Query;
+import com.atlassian.jira.issue.Issue;
+
+import ws.marszalek.jira.cardsPrinter.CardInformation;
 
 public abstract class ServletBase extends HttpServlet{
     protected UserManager userManager;
@@ -56,7 +59,8 @@ public abstract class ServletBase extends HttpServlet{
     public void setTemplateRenderer (TemplateRenderer templateRenderer) { this.templateRenderer = templateRenderer; }
     
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    {
 	String username = userManager.getRemoteUsername(request);
 	
 	String jqlQuery = request.getParameter("jqlQuery");
@@ -73,19 +77,22 @@ public abstract class ServletBase extends HttpServlet{
 	applicationUser = this.jiraAuthenticationContext.getUser();
 	user = ApplicationUsers.toDirectoryUser(applicationUser);
 	
-	if (jqlQuery != null) {
+	if (jqlQuery != null)
+	{
 	    ParseResult parseResult = this.searchService.parseQuery(user, jqlQuery);
 	    
 	    if (false == parseResult.isValid())
 	    {
 		StringBuilder responseBuilder = new StringBuilder();
 		responseBuilder.append("Invalid JQL query:<br/><ul><li>Errors:<ul>");
-		for(String error: parseResult.getErrors().getErrorMessages()) {
+		for(String error: parseResult.getErrors().getErrorMessages())
+		{
 		    responseBuilder.append("<li>").append(error).append("</li>");		
 		}
 		
 		responseBuilder.append("</ul></li><li>Warnings:<ul>");
-		for(String warning: parseResult.getErrors().getWarningMessages()) {
+		for(String warning: parseResult.getErrors().getWarningMessages())
+		{
 		    responseBuilder.append("<li>").append(warning).append("</li>");		
 		}
 		
@@ -103,10 +110,12 @@ public abstract class ServletBase extends HttpServlet{
 	context.put("jqlQueryUrl", jqlQueryUrl);
 	context.put("baseUrl", baseUrl);
 	
-	try {
+	try
+	{
 	    processRequest(request, response);
 	}
-	catch(Exception e) {
+	catch(Exception e)
+	{
 	    StringBuilder responseBuilder = new StringBuilder();
 	    responseBuilder.append("Unhandled exception occured:")
 		.append("</br>")
@@ -134,7 +143,22 @@ public abstract class ServletBase extends HttpServlet{
 	    builder.append(request.getQueryString());
 	}
 	return URI.create(builder.toString());
-    } 
+    }
+    
+    private CardInformation issueToCardInfo(Issue issue)
+    {
+	String key = issue.getKey();
+	String summary = issue.getSummary();
+	int subtasks = issue.getSubTaskObjects().size();
+	int storyPoints = this.storyPointsField != null && this.storyPointsField.getValue(issue) != null ?
+			    Math.round((Float)this.storyPointsField.getValue(issue))
+			    : -1;
+	
+	return new CardInformation(key,
+	    summary,
+	    storyPoints,
+	    subtasks);
+    }
     
     protected abstract void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException, SearchException;
     

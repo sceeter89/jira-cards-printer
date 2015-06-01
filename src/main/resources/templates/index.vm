@@ -41,7 +41,7 @@
 	    #end
 	  <tr>
 	    <td colspan="4">
-	      <a href="$baseUrl/plugins/servlet/ganymede/cardsprintpreview?jqlQuery=$jqlQuery">Print</a>
+	      <a href="$baseUrl/plugins/servlet/yakuza/cardsprintpreview?jqlQuery=$jqlQuery">Print</a>
 	    </td>
 	  </tr>	
 	#else

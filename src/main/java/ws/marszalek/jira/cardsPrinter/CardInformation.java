@@ -1,6 +1,7 @@
-package eu.ganymede.jira.cardsPrinter;
+package ws.marszalek.jira.cardsPrinter;
 
-public class CardInformation {
+public class CardInformation
+{
     private final String key;
     private final String summary;
     private final int storyPoints;
@@ -9,8 +10,8 @@ public class CardInformation {
     public CardInformation(String key,
 	String summary,
 	int storyPoints,
-	int subtasks) {
-	
+	int subtasks)
+    {
 	this.key = key;
 	this.summary = summary;
 	this.storyPoints = storyPoints;

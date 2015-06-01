@@ -21,13 +21,13 @@
   
   <!-- import from the product container -->
   <component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties"/>
-  <servlet name="Cards Printer Servlet" i18n-name-key="cards-printer-servlet.name" key="cards-printer-servlet" class="eu.ganymede.jira.cardsPrinter.servlet.CardsPrinterServlet">
+  <servlet name="Cards Printer Servlet" i18n-name-key="cards-printer-servlet.name" key="cards-printer-servlet" class="ws.marszalek.jira.cardsPrinter.servlet.CardsPrinterServlet">
     <description key="cards-printer-servlet.description">The Cards Printer Servlet Plugin</description>
-    <url-pattern>/ganymede/cardsprinter</url-pattern>
+    <url-pattern>/yakuza/cardsprinter</url-pattern>
   </servlet>
-  <servlet name="Cards Print Preview Servlet" i18n-name-key="cards-print-preview-servlet.name" key="cards-print-preview-servlet" class="eu.ganymede.jira.cardsPrinter.servlet.CardsPrintPreviewServlet">
+  <servlet name="Cards Print Preview Servlet" i18n-name-key="cards-print-preview-servlet.name" key="cards-print-preview-servlet" class="ws.marszalek.jira.cardsPrinter.servlet.CardsPrintPreviewServlet">
     <description key="cards-print-preview-servlet.description">The Cards Print Preview Servlet Plugin</description>
-    <url-pattern>/ganymede/cardsprintpreview</url-pattern>
+    <url-pattern>/yakuza/cardsprintpreview</url-pattern>
   </servlet>
   <component-import key="templateRenderer" interface="com.atlassian.templaterenderer.TemplateRenderer" filter=""/>
   <component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager" filter=""/>
